@@ -1,0 +1,17 @@
+# Local Database Volumes & Data
+pgdata/
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Database Dumps and Backups
+*.dump
+*.sql.gz
+*.sql.tar.gz
+backups/
+
+# Environment Variables
+.env
+.env.*
+!.env.example

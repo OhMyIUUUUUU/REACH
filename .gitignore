@@ -1,0 +1,56 @@
+# Node / Frontend
+**/node_modules/
+**/dist/
+**/build/
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python / NLP
+**/.venv/
+**/venv/
+**/env/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+**/saved_models/*
+!**/saved_models/.gitkeep
+**/data/*
+!**/data/.gitkeep
+
+# Go / Backend
+**/server
+**/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+go.work.sum
+
+# Database
+**/pgdata/
+**/*.dump
+**/*.sql.gz
+**/*.sql.tar.gz
+
+# Environment Variables & Credentials
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# IDE & OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
