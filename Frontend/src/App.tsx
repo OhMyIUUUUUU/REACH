@@ -1,29 +1,26 @@
 import { useState } from 'react'
-
-interface HealthResponse {
-  status: string
-  timestamp: string
-  uptime: string
-}
+import { reachApi, type HealthResponse, type APIInfoResponse } from './api'
 
 function App() {
   const [clickCount, setClickCount] = useState<number>(0)
   const [loading, setLoading] = useState<boolean>(false)
   const [healthData, setHealthData] = useState<HealthResponse | null>(null)
+  const [infoData, setInfoData] = useState<APIInfoResponse | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const checkBackendHealth = async () => {
     setLoading(true)
     setErrorMsg(null)
     setHealthData(null)
+    setInfoData(null)
 
     try {
-      const response = await fetch('/api/health')
-      if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`)
-      }
-      const data: HealthResponse = await response.json()
-      setHealthData(data)
+      const [health, info] = await Promise.all([
+        reachApi.getHealth(),
+        reachApi.getInfo(),
+      ])
+      setHealthData(health)
+      setInfoData(info)
     } catch (err: unknown) {
       if (err instanceof Error) {
         setErrorMsg(err.message)
@@ -116,8 +113,8 @@ function App() {
             </p>
 
             <div className="flex flex-wrap gap-2">
+              <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-sky-950/60 text-sky-300 border border-sky-500/30">Axios REST Client</span>
               <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-slate-800/80 text-slate-300 border border-slate-700/50">Go 1.27</span>
-              <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-slate-800/80 text-slate-300 border border-slate-700/50">reach/backend</span>
               <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-slate-800/80 text-slate-300 border border-slate-700/50">CORS Ready</span>
               <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-slate-800/80 text-slate-300 border border-slate-700/50">Graceful Exit</span>
             </div>
@@ -130,7 +127,7 @@ function App() {
                 disabled={loading}
                 id="ping-backend-button"
               >
-                {loading ? 'Pinging /api/health...' : 'Test Backend Connection'}
+                {loading ? 'Requesting REST API (/api/health & /api/info)...' : 'Test REST Connection'}
               </button>
             </div>
 
@@ -138,7 +135,13 @@ function App() {
               <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs font-mono space-y-1">
                 <div><strong>✓ Connected:</strong> Status: {healthData.status}</div>
                 <div><strong>Uptime:</strong> {healthData.uptime}</div>
-                <div><strong>Time:</strong> {healthData.timestamp}</div>
+                <div><strong>Server Time:</strong> {healthData.timestamp}</div>
+                {infoData && (
+                  <div className="pt-1 mt-1 border-t border-emerald-500/20 text-emerald-400">
+                    <div><strong>Service:</strong> {infoData.name} (v{infoData.version})</div>
+                    <div><strong>Env:</strong> {infoData.environment}</div>
+                  </div>
+                )}
               </div>
             )}
 
