@@ -20,14 +20,19 @@ else
   echo "Warning: Frontend directory not found."
 fi
 
-# 2. Backend Dependencies (Go Modules)
+# 2. Backend Dependencies (Python FastAPI)
 echo ""
-echo "2. Installing Backend dependencies (Go modules)..."
+echo "2. Installing Backend dependencies (Python venv & pip)..."
 if [ -d "$ROOT_DIR/Backend" ]; then
   (
     cd "$ROOT_DIR/Backend"
-    go mod download
-    go mod tidy
+    if [ ! -d ".venv" ]; then
+      echo "Creating Python virtual environment (.venv)..."
+      python3 -m venv .venv
+    fi
+    source .venv/bin/activate
+    echo "Installing packages from requirements.txt..."
+    pip install -r requirements.txt
   )
   echo "Backend dependencies installed."
 else

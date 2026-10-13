@@ -37,11 +37,14 @@ cleanup() {
 
 trap cleanup INT TERM EXIT
 
-# 1. Start Go Backend
-echo "Starting Go Backend on http://localhost:8080..."
+# 1. Start Python FastAPI Backend
+echo "Starting Python FastAPI Backend on http://localhost:8080..."
 (
   cd "$ROOT_DIR/Backend"
-  go run main.go
+  if [ -d ".venv" ]; then
+    source .venv/bin/activate
+  fi
+  python -m uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload
 ) &
 BACKEND_PID=$!
 

@@ -1,26 +1,22 @@
-# Binaries for programs and plugins
-*.exe
-*.exe~
-*.dll
+# Python virtual environments & bytecode
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
 *.so
-*.dylib
-server
-bin/
+.pytest_cache/
 
-# Test binary, built with `go test -c`
-*.test
-
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
-
-# Dependency directories (remove the comment below to include it)
-# vendor/
-
-# Go workspace file
-go.work
-go.work.sum
+# SQLite local testing DB
+*.db
+reach_dev.db
 
 # Environment variables
 .env
 .env.*
 !.env.example
+
+# IDE
+.vscode/
+.idea/

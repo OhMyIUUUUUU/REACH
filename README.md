@@ -1,69 +1,76 @@
-# REACH
+# REACH (Reviewer Evaluation and Assignment for Conference Handling)
 
-Fullstack monorepo with React TypeScript frontend, Go backend, Python NLP / Machine Learning microservice, and PostgreSQL database layer.
+REACH is a web-based university research-conference management framework with an explainable Natural Language Processing (NLP) reviewer-matching engine. The system automates matching submitted research papers with qualified reviewers by evaluating keyword overlap, TF-IDF cosine similarity, reviewer workload limits, and conflict-of-interest (COI) constraints in a double-blind workflow.
 
-## Architecture
+---
 
-- [Frontend/](file:///home/ohmyiu/Documents/REACH/Frontend) - React 19 + TypeScript + Vite + Tailwind CSS v4
-- [Backend/](file:///home/ohmyiu/Documents/REACH/Backend) - Go 1.27 HTTP REST API (`reach/backend`)
-- [Nlp-service/](file:///home/ohmyiu/Documents/REACH/Nlp-service) - Python FastAPI + Machine Learning / NLP service
-- [DB/](file:///home/ohmyiu/Documents/REACH/DB) - PostgreSQL Docker orchestration, schema migrations, and seeds
-- [Docs/](file:///home/ohmyiu/Documents/REACH/Docs) - System specifications and design documents
+## Tech Stack
+
+| Layer | Technology |
+| :--- | :--- |
+| **Frontend** | React 19 + TypeScript (Vite + Tailwind CSS v4) |
+| **Backend** | Python (FastAPI + SQLAlchemy 2.0) |
+| **Database** | PostgreSQL 16 |
+| **NLP & ML** | scikit-learn, NLTK |
+| **Auth** | JWT (email/password with native bcrypt) |
+| **Deployment** | Docker + Docker Compose |
+
+---
+
+## Directory Architecture
+
+- [Frontend/](Frontend) - React 19 + TypeScript + Vite + Tailwind CSS v4
+- [Backend/](Backend) - Python FastAPI REST API (`app/main.py`), PostgreSQL ORM, JWT authentication, and Scikit-Learn/NLTK reviewer matching engine
+- [DB/](DB) - PostgreSQL schemas (`schema.sql`), SQL migrations, seeds, and Docker configurations
+- [Docs/](Docs) - System specifications, architecture design docs, and thesis reference materials
 
 ---
 
 ## Quickstart
 
-### 1. Install All Dependencies
+### 1. Install Dependencies
 ```bash
 ./install-deps.sh
 ```
-*Installs npm packages for Frontend, Go modules for Backend, and creates the Python virtual environment with NLP packages for Nlp-service.*
+*Installs npm packages for Frontend and sets up the Python virtual environment with all required packages for Backend.*
 
 ---
 
-### 2. Run Full Stack (Frontend + Backend)
+### 2. Run with Docker Compose (Full Stack)
 ```bash
+docker compose up -d
+```
+Starts PostgreSQL and the Python FastAPI backend in connected containers.
+
+---
+
+### 3. Run Development Servers (Bare Metal)
+```bash
+# 1. Start Database
+cd DB && docker compose up -d && cd ..
+
+# 2. Start Backend & Frontend concurrently
 ./start-dev.sh
 ```
-*Runs Go backend on `:8080` and React dev server on `:5173` concurrently. Press `Ctrl+C` to stop both.*
-
-*(Optional: Run `./start-dev.sh --with-nlp` to include the Python NLP service)*
+- **Backend API**: `http://localhost:8080` (Interactive Swagger: `/docs`)
+- **Frontend App**: `http://localhost:5173`
+- **PostgreSQL**: `localhost:5432`
 
 ---
 
-### Individual Services
+## Core API Endpoints
 
-### 1. Database (PostgreSQL)
-```bash
-cd DB
-docker compose up -d
-./scripts/migrate.sh
-```
-Runs PostgreSQL 16 on port `5432`.
+### Health & Metadata
+- `GET /` - Root service index
+- `GET /api/health` - Health check status, UTC timestamp, and uptime
+- `GET /api/info` - Service metadata and environment
 
-### 2. Backend (Go)
-```bash
-cd Backend
-go run main.go
-```
-The API server starts on `http://localhost:8080`.
-- Health check: `http://localhost:8080/api/health`
-- Info: `http://localhost:8080/api/info`
+### Authentication
+- `POST /api/auth/register` - Register a new user (email, username, password) and receive JWT
+- `POST /api/auth/login` - Authenticate with email & password and receive JWT
+- `GET /api/auth/me` - Retrieve current authenticated user profile (Protected Bearer token)
 
-### 3. Frontend (React + TypeScript)
-```bash
-cd Frontend
-npm run dev
-```
-The Vite development server starts on `http://localhost:5173`.
-
-### 4. NLP & Machine Learning Service (Python)
-```bash
-cd Nlp-service
-source .venv/bin/activate
-uvicorn app.main:app --port 5000 --reload
-```
-The NLP service starts on `http://localhost:5000`.
-- Swagger Docs: `http://localhost:5000/docs`
-- Health check: `http://localhost:5000/api/nlp/health`
+### NLP Reviewer Matching
+- `POST /api/nlp/match` - Match conference papers to reviewer profiles with TF-IDF, keywords, workload capacity, and conflict-of-interest detection
+- `POST /api/nlp/similarity` - Pairwise TF-IDF cosine similarity
+- `POST /api/nlp/tokenize` - Text tokenization and stopword removal

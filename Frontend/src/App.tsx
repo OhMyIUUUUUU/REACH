@@ -96,11 +96,11 @@ function App() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-bold text-lg font-mono">
-                  Go
+                  Py
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-white">Backend</h2>
-                  <p className="text-xs text-slate-500">Go 1.27 + net/http</p>
+                  <p className="text-xs text-slate-500">Python (FastAPI) + PostgreSQL</p>
                 </div>
               </div>
               <span className="text-xs px-2.5 py-0.5 rounded-full font-medium bg-slate-800 text-slate-400 border border-slate-700/50">
@@ -109,14 +109,14 @@ function App() {
             </div>
 
             <p className="text-sm text-slate-400 leading-relaxed">
-              Lightweight HTTP server with JSON routing, CORS headers, and graceful shutdown handling.
+              FastAPI REST server with PostgreSQL ORM, JWT authentication, and Scikit-Learn / NLTK reviewer matching.
             </p>
 
             <div className="flex flex-wrap gap-2">
               <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-sky-950/60 text-sky-300 border border-sky-500/30">Axios REST Client</span>
-              <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-slate-800/80 text-slate-300 border border-slate-700/50">Go 1.27</span>
-              <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-slate-800/80 text-slate-300 border border-slate-700/50">CORS Ready</span>
-              <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-slate-800/80 text-slate-300 border border-slate-700/50">Graceful Exit</span>
+              <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-slate-800/80 text-slate-300 border border-slate-700/50">FastAPI</span>
+              <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-slate-800/80 text-slate-300 border border-slate-700/50">PostgreSQL</span>
+              <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-slate-800/80 text-slate-300 border border-slate-700/50">JWT Auth</span>
             </div>
 
             <div className="pt-2">
@@ -150,7 +150,7 @@ function App() {
                 <div><strong>⚠ Offline or Unreachable:</strong></div>
                 <div>{errorMsg}</div>
                 <div className="text-slate-400 mt-1">
-                  Run <code className="text-cyan-300">go run main.go</code> in <code className="text-cyan-300">/Backend</code> to start.
+                  Run <code className="text-cyan-300">uvicorn app.main:app --port 8080 --reload</code> in <code className="text-cyan-300">/Backend</code> to start.
                 </div>
               </div>
             )}
@@ -167,7 +167,7 @@ function App() {
             </div>
             <div className="bg-slate-900/40 border border-slate-800 hover:border-slate-700 rounded-xl p-3.5 transition-colors">
               <div className="font-mono text-xs font-bold text-cyan-400">Backend/</div>
-              <div className="text-xs text-slate-500 mt-1">Go REST service</div>
+              <div className="text-xs text-slate-500 mt-1">Python FastAPI REST</div>
             </div>
             <div className="bg-slate-900/40 border border-slate-800 hover:border-slate-700 rounded-xl p-3.5 transition-colors">
               <div className="font-mono text-xs font-bold text-amber-400">DB/</div>
