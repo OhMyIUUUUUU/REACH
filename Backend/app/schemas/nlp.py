@@ -1,6 +1,38 @@
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 
+# Health Schema
+class NLPHealthResponse(BaseModel):
+    status: str = "ok"
+    service: str = "REACH NLP & Reviewer Matching Service"
+    version: str = "1.0.0"
+    models_loaded: bool = True
+
+# Tokenization Schemas
+class TokenizeRequest(BaseModel):
+    text: str = Field(..., description="Raw text string to tokenize and clean")
+
+class TokenInfo(BaseModel):
+    text: str
+    lemma: Optional[str] = None
+    pos: Optional[str] = None
+    is_stop: Optional[bool] = None
+
+class TokenizeResponse(BaseModel):
+    tokens: List[str]
+    token_count: int
+    detailed_tokens: Optional[List[TokenInfo]] = None
+
+# Sentiment Schemas
+class SentimentRequest(BaseModel):
+    text: str = Field(..., description="Text input for sentiment classification")
+
+class SentimentResponse(BaseModel):
+    label: str  # positive, negative, neutral
+    score: float
+    details: Optional[Dict[str, float]] = None
+
+# Reviewer Matching Schemas
 class ReviewerProfile(BaseModel):
     id: str
     name: str
@@ -35,6 +67,7 @@ class MatchResponse(BaseModel):
     total_reviewers_evaluated: int
     recommendations: List[MatchResult]
 
+# Text Similarity Schemas
 class TextSimilarityRequest(BaseModel):
     source_text: str
     candidate_texts: List[str]

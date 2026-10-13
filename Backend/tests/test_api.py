@@ -22,7 +22,6 @@ def test_info(client):
     assert data["status"] == "running"
 
 def test_auth_and_protected_route(client):
-    # 1. Register a test user
     user_payload = {
         "email": "testreviewer@reach.edu",
         "username": "reviewer_test",
@@ -36,14 +35,12 @@ def test_auth_and_protected_route(client):
     assert reg_data["user"]["email"] == "testreviewer@reach.edu"
     token = reg_data["access_token"]
 
-    # 2. Access /api/auth/me with Bearer token
     headers = {"Authorization": f"Bearer {token}"}
     me_resp = client.get("/api/auth/me", headers=headers)
     assert me_resp.status_code == 200
     me_data = me_resp.json()
     assert me_data["username"] == "reviewer_test"
 
-    # 3. Test Login
     login_payload = {
         "email": "testreviewer@reach.edu",
         "password": "SecurePassword123!"
@@ -51,6 +48,28 @@ def test_auth_and_protected_route(client):
     login_resp = client.post("/api/auth/login", json=login_payload)
     assert login_resp.status_code == 200
     assert "access_token" in login_resp.json()
+
+def test_nlp_endpoints(client):
+    # 1. NLP Health
+    health_resp = client.get("/api/nlp/health")
+    assert health_resp.status_code == 200
+    assert health_resp.json()["status"] == "ok"
+    assert health_resp.json()["models_loaded"] is True
+
+    # 2. Tokenize via Query
+    tok_q = client.post("/api/nlp/tokenize?text=Reviewer+Assignment+Problem")
+    assert tok_q.status_code == 200
+    assert "reviewer" in tok_q.json()
+
+    # 3. Tokenize via JSON Body
+    tok_b = client.post("/api/nlp/tokenize", json={"text": "Reviewer Assignment Problem"})
+    assert tok_b.status_code == 200
+    assert tok_b.json()["token_count"] > 0
+
+    # 4. Sentiment Analysis
+    sent_resp = client.post("/api/nlp/sentiment", json={"text": "Excellent paper submission with great methodology."})
+    assert sent_resp.status_code == 200
+    assert sent_resp.json()["label"] == "positive"
 
 def test_nlp_matching(client):
     match_payload = {

@@ -25,11 +25,6 @@ cleanup() {
     kill -TERM "$BACKEND_PID" 2>/dev/null || true
   fi
 
-  if [ -n "$NLP_PID" ] && kill -0 "$NLP_PID" 2>/dev/null; then
-    echo "Stopping NLP Service (PID: $NLP_PID)..."
-    kill -TERM "$NLP_PID" 2>/dev/null || true
-  fi
-
   sleep 0.5 2>/dev/null || true
   echo "All services stopped cleanly."
   exit 0
@@ -37,7 +32,7 @@ cleanup() {
 
 trap cleanup INT TERM EXIT
 
-# 1. Start Python FastAPI Backend
+# 1. Start Python FastAPI Backend (with integrated NLP engine)
 echo "Starting Python FastAPI Backend on http://localhost:8080..."
 (
   cd "$ROOT_DIR/Backend"
@@ -48,22 +43,7 @@ echo "Starting Python FastAPI Backend on http://localhost:8080..."
 ) &
 BACKEND_PID=$!
 
-# 2. Optional: Start NLP Service if --with-nlp or --all is passed
-if [[ "$*" == *"--with-nlp"* ]] || [[ "$*" == *"--all"* ]]; then
-  if [ -d "$ROOT_DIR/Nlp-service/.venv" ]; then
-    echo "Starting NLP Service on http://localhost:5000..."
-    (
-      cd "$ROOT_DIR/Nlp-service"
-      source .venv/bin/activate
-      uvicorn app.main:app --port 5000 --reload
-    ) &
-    NLP_PID=$!
-  else
-    echo "Warning: Nlp-service/.venv not found. Skipping NLP service."
-  fi
-fi
-
-# 3. Start React + TypeScript Frontend
+# 2. Start React + TypeScript Frontend
 echo "Starting Frontend Vite Server on http://localhost:5173..."
 (
   cd "$ROOT_DIR/Frontend"
@@ -72,11 +52,8 @@ echo "Starting Frontend Vite Server on http://localhost:5173..."
 FRONTEND_PID=$!
 
 echo "----------------------------------------------------"
-echo "Backend:  http://localhost:8080"
-echo "Frontend: http://localhost:5173"
-if [ -n "$NLP_PID" ]; then
-  echo "NLP API:  http://localhost:5000 (Docs: /docs)"
-fi
+echo "Backend (REST + NLP): http://localhost:8080 (Docs: /docs)"
+echo "Frontend App:        http://localhost:5173"
 echo "Press Ctrl+C to stop all services."
 echo "----------------------------------------------------"
 

@@ -39,26 +39,6 @@ else
   echo "Warning: Backend directory not found."
 fi
 
-# 3. NLP & Machine Learning Dependencies (Python)
-echo ""
-echo "3. Installing NLP Service dependencies (Python venv & pip)..."
-if [ -d "$ROOT_DIR/Nlp-service" ]; then
-  (
-    cd "$ROOT_DIR/Nlp-service"
-    if [ ! -d ".venv" ]; then
-      echo "Creating Python virtual environment (.venv)..."
-      python3 -m venv .venv
-    fi
-    source .venv/bin/activate
-    echo "Installing packages from requirements.txt..."
-    pip install -r requirements.txt
-    echo "Downloading spaCy English language model (en_core_web_sm)..."
-    python -m spacy download en_core_web_sm || true
-  )
-  echo "NLP Service dependencies installed."
-else
-  echo "Warning: Nlp-service directory not found."
-fi
 
 echo ""
 echo "===================================================="

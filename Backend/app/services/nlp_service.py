@@ -1,6 +1,6 @@
 import re
 import logging
-from typing import List, Set, Tuple
+from typing import List, Set, Optional, Dict
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from app.schemas.nlp import (
@@ -9,12 +9,14 @@ from app.schemas.nlp import (
     MatchResult,
     TextSimilarityRequest,
     TextSimilarityResponse,
-    SimilarityResult
+    SimilarityResult,
+    TokenizeResponse,
+    TokenInfo,
+    SentimentResponse
 )
 
 logger = logging.getLogger(__name__)
 
-# Basic fallback English stopwords in case NLTK corpus is uninitialized
 DEFAULT_STOPWORDS = {
     "a", "about", "above", "after", "again", "against", "all", "am", "an", "and",
     "any", "are", "aren't", "as", "at", "be", "because", "been", "before", "being",
@@ -57,14 +59,62 @@ class NLPService:
             return DEFAULT_STOPWORDS
 
     def tokenize_and_clean(self, text: str) -> List[str]:
-        """Tokenize text into lowercase alphanumeric words, filtering stopwords."""
+        """Tokenize text into lowercase words, filtering stopwords."""
         words = re.findall(r"\b[a-zA-Z0-9_-]+\b", text.lower())
         return [w for w in words if w not in self.stopwords and len(w) > 2]
 
+    def get_detailed_tokens(self, text: str) -> TokenizeResponse:
+        """Detailed tokenization with lemmas and stopword tags."""
+        words = re.findall(r"\b[a-zA-Z0-9_-]+\b", text)
+        clean = [w for w in words if w.lower() not in self.stopwords and len(w) > 2]
+        detailed = [
+            TokenInfo(
+                text=w,
+                lemma=w.lower(),
+                is_stop=w.lower() in self.stopwords
+            )
+            for w in words
+        ]
+        return TokenizeResponse(
+            tokens=clean,
+            token_count=len(clean),
+            detailed_tokens=detailed
+        )
+
+    def analyze_sentiment(self, text: str) -> SentimentResponse:
+        """Lexicon-based polarity sentiment analysis."""
+        pos_words = {"good", "great", "excellent", "amazing", "love", "awesome", "positive", "helpful", "clean", "fast", "best"}
+        neg_words = {"bad", "terrible", "poor", "hate", "awful", "negative", "broken", "slow", "error", "fail", "worst"}
+
+        tokens = re.findall(r"\b\w+\b", text.lower())
+        pos_count = sum(1 for t in tokens if t in pos_words)
+        neg_count = sum(1 for t in tokens if t in neg_words)
+        total = pos_count + neg_count
+
+        if total == 0:
+            return SentimentResponse(label="neutral", score=0.5, details={"positive": 0.0, "negative": 0.0})
+
+        pos_ratio = pos_count / total
+        neg_ratio = neg_count / total
+
+        if pos_ratio > neg_ratio:
+            label = "positive"
+            score = round(pos_ratio, 4)
+        elif neg_ratio > pos_ratio:
+            label = "negative"
+            score = round(neg_ratio, 4)
+        else:
+            label = "neutral"
+            score = 0.5
+
+        return SentimentResponse(
+            label=label,
+            score=score,
+            details={"positive": round(pos_ratio, 4), "negative": round(neg_ratio, 4)}
+        )
+
     def compute_keyword_overlap(self, paper_keywords: List[str], reviewer_keywords: List[str]) -> float:
-        """
-        Computes Jaccard / overlap coefficient between paper keywords and reviewer expertise.
-        """
+        """Computes overlap coefficient between paper keywords and reviewer expertise."""
         if not paper_keywords or not reviewer_keywords:
             return 0.0
 
@@ -75,15 +125,14 @@ class NLPService:
         if not intersection:
             return 0.0
 
-        # Overlap score relative to paper keywords requested
         return round(len(intersection) / len(p_set), 4)
 
     def match_reviewers(self, request: MatchRequest) -> MatchResponse:
         """
         Core REACH Reviewer Matching Framework:
-        1. TF-IDF + Cosine Similarity between paper (title + abstract) and reviewer profiles.
-        2. Keyword-based overlap matching.
-        3. Workload and Conflict-of-Interest (COI) constraint evaluation.
+        1. Scikit-Learn TF-IDF + Cosine Similarity.
+        2. Keyword overlap coefficient.
+        3. Workload limits and Conflict of Interest (COI) evaluation.
         """
         paper_text = f"{request.paper_title} {request.paper_abstract}"
         reviewer_texts = [
@@ -91,7 +140,6 @@ class NLPService:
             for r in request.reviewers
         ]
 
-        # 1. TF-IDF Cosine Similarity via Scikit-Learn
         tfidf_scores = [0.0] * len(request.reviewers)
         try:
             corpus = [paper_text] + reviewer_texts
@@ -106,18 +154,14 @@ class NLPService:
         except Exception as e:
             logger.warning("Error computing TF-IDF similarity: %s", e)
 
-        # 2. Constraints and Ranking
         paper_affiliations = {a.strip().lower() for a in (request.paper_affiliations or []) if a.strip()}
         results: List[MatchResult] = []
 
         for idx, reviewer in enumerate(request.reviewers):
             tfidf = tfidf_scores[idx]
             kw_score = self.compute_keyword_overlap(request.paper_keywords, reviewer.expertise_keywords)
-
-            # Combined score (60% TF-IDF + 40% Keyword overlap)
             combined = round((0.6 * tfidf) + (0.4 * kw_score), 4)
 
-            # Check Conflict of Interest (e.g. same university/affiliation)
             has_conflict = False
             conflict_reason = None
             reviewer_affiliations = {a.strip().lower() for a in (reviewer.affiliations or []) if a.strip()}
@@ -126,7 +170,6 @@ class NLPService:
                 has_conflict = True
                 conflict_reason = f"Shared affiliation: {', '.join(shared_affils)}"
 
-            # Check Workload capacity
             workload_exceeded = (reviewer.current_assignments or 0) >= (reviewer.max_workload or 5)
 
             results.append(
@@ -142,7 +185,6 @@ class NLPService:
                 )
             )
 
-        # Sort by: valid reviewers first (no conflict & workload ok), then by combined_score descending
         results.sort(
             key=lambda r: (
                 not r.has_conflict,
